@@ -1,38 +1,20 @@
 {
   "figureName": "King Arthur",
-  "startNodeId": "intro",
   "initialState": { "rapport": 0 },
-  "nodes": {
-    "intro": {
-      "id": "intro",
-      "speakerLine": "You stand in the great hall of Camelot while Saxon warbands gather beyond the border. Speak plainly—what brings you before the Round Table?",
-      "context": "5th–6th century legendary Britain, uniting fractured kingdoms against Saxon raids.",
-      "choices": [
-        { "id": "c1", "label": "Offer counsel on uniting the rival British lords", "nextNodeId": "council", "rapportDelta": 1 },
-        { "id": "c2", "label": "Ask whether the Round Table truly makes every knight equal", "nextNodeId": "round_table", "rapportDelta": 0 }
-      ]
-    },
-    "council": {
-      "id": "council",
-      "speakerLine": "A wise answer. Swords alone cannot hold Britain if our own kings quarrel over old grudges while the borders burn.",
-      "context": "Arthurian tradition centers on forging alliances among fractious regional rulers.",
-      "choices": [
-        { "id": "c3", "label": "Pledge your support and take your leave", "nextNodeId": "ending", "rapportDelta": 1 }
-      ]
-    },
-    "round_table": {
+  "greeting": "Welcome, traveler. What brings you to Camelot?",
+  "topics": [
+    {
       "id": "round_table",
-      "speakerLine": "No seat sits higher than another here. When every lord shares the same table, pride gives way to shared duty.",
-      "context": "First described by Wace in 1155, the Round Table symbolized chivalric equality.",
-      "choices": [
-        { "id": "c3", "label": "Pledge your support and take your leave", "nextNodeId": "ending", "rapportDelta": 0 }
-      ]
-    },
-    "ending": {
-      "id": "ending",
-      "speakerLine": "Camelot remembers those who stand with it in uncertain hours. Go in peace, friend.",
-      "context": "End of vertical slice path.",
-      "choices": []
+      "keywords": ["round table", "knight", "knights"],
+      "speakerLine": "The Round Table is a symbol of equality and unity among my knights. Each knight has an equal voice, and we strive to uphold justice and honor.",
+      "context": "Discussing the Round Table and its significance.",
+      "rapportDelta": 1
     }
-  }
+  ],
+
+  "fallback": {
+  "speakerLine": "Speak plainly, traveler. Ask me of the Round Table.",
+  "context": "Try asking about the Round Table.",
+  "rapportDelta": 0
+}
 }

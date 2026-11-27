@@ -11,35 +11,41 @@ const sessions = new Map();
 app.post("/api/session/start", (req, res) => {
   const sessionId = String(Date.now());
   const state = { ...data.initialState };
-  const node = data.nodes[data.startNodeId];
-  sessions.set(sessionId, { currentNodeId: node.id, state });
-  res.json({ sessionId, figureName: data.figureName, node, state });
+  sessions.set(sessionId, { state });
+  res.json({
+    sessionId,
+    figureName: data.figureName,
+    greeting: data.greeting,
+    state,
+  });
 });
 
 app.post("/api/conversation/step", (req, res) => {
-  const { sessionId, choiceId } = req.body;
+  const { sessionId, message } = req.body;
   const session = sessions.get(sessionId);
 
   if (!session) {
     return res.status(404).json({ error: "Session not found" });
   }
 
-  const currentNode = data.nodes[session.currentNodeId];
-  const chosen = currentNode.choices.find((c) => c.id === choiceId);
-
-  if (!chosen) {
-    return res.status(400).json({ error: "Invalid choice for current node" });
+  if (!message || !message.trim()) {
+    return res.status(400).json({ error: "Message cannot be empty" });
   }
 
-  const nextNode = data.nodes[chosen.nextNodeId];
-  if (!nextNode) {
-    return res.status(500).json({ error: "Target node missing" });
-  }
+  const cleanMessage = message.toLowerCase().trim();
 
-  session.state.rapport += chosen.rapportDelta || 0;
-  session.currentNodeId = nextNode.id;
+  const matchedTopic = data.topics.find((topic) =>
+    topic.keywords.some((keyword) => cleanMessage.includes(keyword.toLowerCase()))
+  );
 
-  res.json({ node: nextNode, state: session.state });
+  const responseObj = matchedTopic || data.fallback;
+  session.state.rapport += responseObj.rapportDelta || 0;
+
+  res.json({
+    speakerLine: responseObj.speakerLine,
+    context: responseObj.context,
+    state: session.state,
+  });
 });
 
 app.listen(3001, () => {

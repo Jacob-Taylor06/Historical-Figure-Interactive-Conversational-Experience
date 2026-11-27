@@ -1,67 +1,112 @@
 import { useEffect, useState } from "react";
 
-const API_URL = "http://localhost:3001";
-
-export default function App() {
-  const [sessionId, setSessionId] = useState(null);
-  const [figureName, setFigureName] = useState("");
-  const [node, setNode] = useState(null);
-  const [state, setState] = useState({});
+function App() {
+  const [sessionId, setSessionId] = useState("");
+  const [figureName, setFigureName] = useState("King Arthur");
+  const [messages, setMessages] = useState([]);
+  const [contextNote, setContextNote] = useState("");
+  const [state, setState] = useState({ rapport: 0 });
+  const [inputText, setInputText] = useState("");
   const [error, setError] = useState("");
 
   async function startSession() {
     setError("");
-    const res = await fetch(`${API_URL}/api/session/start`, { method: "POST" });
-    const payload = await res.json();
+    const response = await fetch("http://localhost:3001/api/session/start", {
+      method: "POST",
+    });
+    const payload = await response.json();
+
     setSessionId(payload.sessionId);
     setFigureName(payload.figureName);
-    setNode(payload.node);
     setState(payload.state);
+    setContextNote("Ask about the Round Table, Excalibur, Merlin, or the Saxons.");
+    setMessages([{ sender: payload.figureName, text: payload.greeting }]);
   }
 
   useEffect(() => {
     startSession();
   }, []);
 
-  async function handleChoice(choiceId) {
+  async function handleSend(e) {
+    e.preventDefault();
+    if (!inputText.trim()) return;
+
+    const userMessage = inputText.trim();
+    setInputText("");
     setError("");
-    const res = await fetch(`${API_URL}/api/conversation/step`, {
+
+    const response = await fetch("http://localhost:3001/api/conversation/step", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId, choiceId }),
+      body: JSON.stringify({ sessionId, message: userMessage }),
     });
-    const payload = await res.json();
-    if (!res.ok) {
+
+    const payload = await response.json();
+    if (!response.ok) {
       setError(payload.error || "Something went wrong");
       return;
     }
-    setNode(payload.node);
+
     setState(payload.state);
+    setContextNote(payload.context);
+    setMessages((prev) => [
+      ...prev,
+      { sender: "You", text: userMessage },
+      { sender: figureName, text: payload.speakerLine },
+    ]);
   }
 
-  if (error) return <p>Error: {error}</p>;
-  if (!node) return <p>Loading...</p>;
-
   return (
-    <main style={{ maxWidth: 640, margin: "2rem auto", fontFamily: "sans-serif" }}>
+    <main style={{ maxWidth: "680px", margin: "2rem auto", fontFamily: "sans-serif" }}>
       <h1>{figureName}</h1>
-      <p style={{ fontSize: "0.9rem", opacity: 0.75 }}>Rapport: {state.rapport ?? 0}</p>
-      <p><strong>{node.speakerLine}</strong></p>
-      {node.context && <p style={{ fontSize: "0.95rem" }}><em>{node.context}</em></p>}
+      <p>
+        <strong>Rapport:</strong> {state.rapport}
+      </p>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginTop: "1rem" }}>
-        {node.choices.map((choice) => (
-          <button key={choice.id} onClick={() => handleChoice(choice.id)}>
-            {choice.label}
-          </button>
+      {error && <p style={{ color: "crimson" }}>{error}</p>}
+
+      <div
+        style={{
+          border: "1px solid #ccc",
+          borderRadius: "8px",
+          padding: "1rem",
+          minHeight: "260px",
+          maxHeight: "380px",
+          overflowY: "auto",
+          marginBottom: "1rem",
+        }}
+      >
+        {messages.map((msg, index) => (
+          <p key={index} style={{ marginBottom: "0.75rem" }}>
+            <strong>{msg.sender}:</strong> {msg.text}
+          </p>
         ))}
       </div>
 
-      {node.choices.length === 0 && (
-        <button style={{ marginTop: "1rem" }} onClick={startSession}>
-          Restart Conversation
-        </button>
+      {contextNote && (
+        <p style={{ fontStyle: "italic", color: "#444", marginBottom: "1rem" }}>
+          {contextNote}
+        </p>
       )}
+
+      <form onSubmit={handleSend} style={{ display: "flex", gap: "0.5rem" }}>
+        <input
+          type="text"
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          placeholder="Speak to King Arthur..."
+          style={{ flex: 1, padding: "0.6rem" }}
+        />
+        <button type="submit" style={{ padding: "0.6rem 1.2rem" }}>
+          Send
+        </button>
+      </form>
+
+      <button onClick={startSession} style={{ marginTop: "1rem" }}>
+        Restart Conversation
+      </button>
     </main>
   );
 }
+
+export default App;
